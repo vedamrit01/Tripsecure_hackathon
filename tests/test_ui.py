@@ -28,3 +28,17 @@ class UITests(unittest.TestCase):
         next(b for b in at.button if b.label=='Build my itinerary →').click().run()
         self.assertFalse(at.exception)
         self.assertEqual(at.session_state['trip']['constraints']['people'],3)
+
+    def test_expense_packing_and_comparison(self):
+        at=AppTest.from_file('app.py').run()
+        next(b for b in at.button if b.label=='Build my itinerary →').click().run()
+        next(t for t in at.text_input if t.label=='Expense description').set_value('Lunch')
+        next(b for b in at.button if b.label=='Add expense').click().run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state['expenses'][0]['amount'],500)
+        next(c for c in at.checkbox if c.label=='Photo ID').check().run()
+        next(b for b in at.button if b.label=='Choose Jaipur').click().run()
+        self.assertFalse(at.exception)
+        self.assertEqual(at.session_state['trip']['destination'],'Jaipur')
+        self.assertEqual(at.session_state['expenses'],[])
+        self.assertFalse(next(c for c in at.checkbox if c.label=='Photo ID').value)
