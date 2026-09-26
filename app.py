@@ -1,7 +1,10 @@
 import json
+import base64
 import os
 from dataclasses import asdict
 from datetime import date, timedelta
+from pathlib import Path
+from companion import compare_destinations, packing_list, split_expenses, calendar_export
 import streamlit as st
 from catalog import DESTINATIONS, SOURCES
 from core import Constraints, plan, offline_extract, differences
@@ -9,18 +12,15 @@ from services import azure_extract, source_guard, weather, fetch_source, load_en
 
 load_env()
 st.set_page_config(page_title='TripSure | Travel with a plan B',page_icon='🧭',layout='wide')
-st.markdown('''<style>
-.stApp {background:#f5f7fb;color:#17243a} h1,h2,h3 {letter-spacing:-.035em}
-[data-testid="stSidebar"]{background:#eaf0f5} .stButton>button[kind="primary"]{background:#087f75;border:0}
-[data-testid="stMetric"] {background:white;border:1px solid #e1e7ef;padding:18px;border-radius:16px}
-.hero {background:linear-gradient(110deg,#102b3d,#146b65);padding:32px 36px;border-radius:22px;color:white;margin-bottom:24px}
-.hero h1 {color:white;margin:5px 0 10px;font-size:46px}.hero p{color:#d0e8e5;font-size:17px}.eyebrow{letter-spacing:3px;font-size:12px;color:#8ee4ce;font-weight:700}
-</style>''',unsafe_allow_html=True)
-st.markdown('<div class="hero"><div class="eyebrow">TRIPSURE / AN ADAPTIVE TRAVEL AGENT</div><h1>Good trips have a plan B.</h1><p>Tell us what matters. See the budget. Keep your favourites. Adapt the rest.</p></div>',unsafe_allow_html=True)
+st.markdown('<style>'+Path(__file__).with_name('travel.css').read_text()+'</style>',unsafe_allow_html=True)
+hero_image=base64.b64encode(Path(__file__).with_name('assets').joinpath('rishikesh.jpg').read_bytes()).decode()
+st.markdown('<style>.hero{background:linear-gradient(90deg,rgba(12,42,32,.96),rgba(15,48,37,.83) 48%,rgba(15,48,37,.2)),url(data:image/jpeg;base64,'+hero_image+');background-size:cover;background-position:center}</style>',unsafe_allow_html=True)
+st.markdown('<div class="hero"><div class="eyebrow">TRIPSURE &nbsp; / &nbsp; GO FURTHER. WORRY LESS.</div><h1>A little wanderlust.<br>A smarter plan B.</h1><p>Find your escape, make every rupee count, and keep the moments that matter—even when plans change.</p><div class="hero-footer"><span>✦ Personalised escapes</span><span>₹ Transparent budgets</span><span>↻ Plans that adapt</span></div><div class="route-label">Delhi → Rishikesh &nbsp; / &nbsp; Jaipur</div></div>',unsafe_allow_html=True)
 
 with st.sidebar:
     st.title('🧭 TripSure')
-    st.caption('Azure-powered understanding · deterministic planning')
+    st.caption('Your next chapter starts here.')
+    st.caption('Azure understanding · validated planning')
     mode=st.radio('Planner mode',['Offline demo','Azure AI'])
     with st.expander('Azure connection',expanded=mode=='Azure AI'):
         endpoint=st.text_input('Azure OpenAI endpoint',value=os.getenv('AZURE_OPENAI_ENDPOINT','https://ved.openai.azure.com/openai/v1/'))
@@ -31,7 +31,7 @@ with st.sidebar:
     st.markdown('**Prototype coverage**')
     st.caption('Delhi → Rishikesh or Jaipur\n\n3–7 days · 1–8 travellers\n\nEstimated prices, no bookings. Two activity windows per sightseeing day.')
     if st.button('Clear trip session'):
-        for name in ('trip','before','change_log','constraints','weather_data','source_data'):
+        for name in ('trip','before','change_log','constraints','weather_data','source_data','expenses','packing','companion_signature'):
             st.session_state.pop(name,None)
         st.rerun()
 
@@ -81,9 +81,9 @@ with right:
 if 'trip' not in st.session_state:
     st.divider()
     a,b,c_col=st.columns(3)
-    a.markdown('### ₹ Every rupee accounted for\nTransport, rooms, meals, activities and a 10% contingency.')
-    b.markdown('### ↻ Change without starting over\nLock favourite activities and repair the rest of the itinerary.')
-    c_col.markdown('### ✓ Evidence you can inspect\nSee assumptions, sources, checks and security boundaries.')
+    a.markdown('<div class="feature-card">01 / TRAVEL WELL<b>More memories. Less maths.</b><p>Transport, stays, meals and a little just-in-case money, all in one transparent budget.</p></div>',unsafe_allow_html=True)
+    b.markdown('<div class="feature-card">02 / STAY FLEXIBLE<b>Rain? We have a plan B.</b><p>Keep your favourites locked in and let the rest of your escape adapt around you.</p></div>',unsafe_allow_html=True)
+    c_col.markdown('<div class="feature-card">03 / GO TOGETHER<b>Every detail, considered.</b><p>Compare escapes, pack the essentials, take your calendar and split the bill fairly.</p></div>',unsafe_allow_html=True)
     st.info('Start with “Build my itinerary” for an instant demo. Connect Azure to demonstrate natural-language understanding.')
 else:
     p=st.session_state.trip
@@ -100,7 +100,7 @@ else:
     if 'adventure' in p['constraints']['interests']:st.warning('Adventure activities are outside this prototype catalogue; that preference is not fulfilled.')
     st.caption('Accommodation is a price tier, not a named or reserved hotel. Activity costs, workshop availability, coordinates and timing are illustrative planning assumptions. Both pace settings use a conservative two-activity cap.')
     for change in st.session_state.get('change_log',[]):st.info(change)
-    itinerary,budget_tab,adapt,trust,security=st.tabs(['Itinerary','Budget','Adapt my trip','Sources & checks','Security lab'])
+    itinerary,budget_tab,adapt,companion,compare,trust,security=st.tabs(['Your journey','Budget','Adapt my trip','Travel kit','Compare escapes','Sources & checks','Security lab'])
     with itinerary:
         for day in p['days']:
             with st.container(border=True):
@@ -115,6 +115,8 @@ else:
         with st.expander('Activity area map · approximate markers'):
             st.caption('Markers are illustrative areas, not verified venue entrances or a computed route. Map tiles require internet.')
             if coords:st.map(coords,zoom=11)
+        st.download_button('Add activities to calendar (.ics)',calendar_export(p),file_name='tripsure-calendar.ics',mime='text/calendar')
+        st.caption('Calendar events use India time. Activities are proposals, not reservations.')
         st.download_button('Download complete trip JSON',json.dumps(p,indent=2),file_name='tripsure-itinerary.json',mime='application/json')
         lines=[f"# TripSure: {p['destination']}",f"Estimated total: INR {p['total']:,}. Prices and times are estimates; no bookings."]
         for day in p['days']:
@@ -143,6 +145,64 @@ else:
                 st.rerun()
             except ValueError as exc:st.error(str(exc))
         st.caption('Locks preserve the activity and its original day/time slot. Conflicting locks are reported rather than silently removed.')
+    with compare:
+        st.markdown('#### Two escapes. One clear decision.')
+        st.caption('Same dates, travellers, interests and budget. Independent estimates without current activity locks.')
+        for column, option in zip(st.columns(2), compare_destinations(Constraints(**p['constraints']))):
+            with column:
+                with st.container(border=True):
+                    st.subheader(('🌿 ' if option['destination']=='Rishikesh' else '🏛️ ')+option['destination'])
+                    st.write('Riverside mornings, quiet cafés and Himalayan foothills.' if option['destination']=='Rishikesh' else 'Palaces, colourful bazaars and Rajasthani flavours.')
+                    st.metric('Estimated total',f"₹{option['total']:,}")
+                    st.write(f"{option['tier'].title()} stay · {option['preference_matches']} interest matches")
+                    st.caption('Within budget' if option['within_budget'] else f"Over budget by ₹{option['total']-option['constraints']['budget']:,}")
+                    if st.button('Choose '+option['destination'],key='choose_'+option['destination']):
+                        st.session_state.trip=option
+                        st.session_state.constraints=Constraints(**option['constraints'])
+                        st.session_state.change_log=['Destination comparison applied. Previous activity locks were reset.']
+                        for field in ('f_dest','weather_data','source_data'):
+                            st.session_state.pop(field,None)
+                        st.rerun()
+    with companion:
+        st.markdown('#### The small things that make a better trip.')
+        st.caption('Your checklist and expenses stay in this browser session. Download expenses before closing. Changing destination, departure date or group size starts a fresh travel kit.')
+        signature=(p['destination'],p['constraints']['start_date'],p['constraints']['people'])
+        if st.session_state.get('companion_signature') != signature:
+            st.session_state.companion_signature=signature
+            st.session_state.expenses=[]
+            for field in list(st.session_state):
+                if field.startswith('pack_'):del st.session_state[field]
+        kit,money=st.columns(2,gap='large')
+        with kit:
+            st.markdown('##### Ready, set, explore')
+            items=packing_list(p)
+            completed=sum(st.checkbox(item,key='pack_'+item) for item in items)
+            st.progress(completed/len(items),text=f'{completed} of {len(items)} essentials packed')
+            st.download_button('Download packing list','\n'.join(('[x] ' if st.session_state.get('pack_'+item) else '[ ] ')+item for item in items),file_name='tripsure-packing.txt')
+        with money:
+            st.markdown('##### Split the memories. And the bill.')
+            n=p['constraints']['people']
+            with st.form('expense_form',clear_on_submit=True):
+                title=st.text_input('Expense description',max_chars=80,placeholder='Lunch at the riverside café')
+                amount=st.number_input('Amount paid · INR',min_value=1,max_value=1000000,value=500,step=50)
+                payer=st.selectbox('Paid by',range(n),format_func=lambda i:f'Traveller {i+1}')
+                add=st.form_submit_button('Add expense')
+            if add:
+                if not title.strip():st.error('Add a short description for this expense.')
+                else:st.session_state.expenses.append({'description':title.strip(),'amount':int(amount),'payer':payer})
+            expenses=st.session_state.expenses
+            split=split_expenses(expenses,n)
+            st.metric('Actual group spending',f"₹{split['total']:,}")
+            st.caption(f"Separate from your estimated plan of ₹{p['total']:,}. Shared equally; extra rupees are assigned in traveller order.")
+            if expenses:
+                st.dataframe([{'Expense':e['description'],'INR':e['amount'],'Paid by':f"Traveller {e['payer']+1}"} for e in expenses],hide_index=True)
+                for transfer in split['transfers']:
+                    st.write(f"Traveller {transfer['from']+1} → Traveller {transfer['to']+1}: ₹{transfer['amount']:,}")
+                if not split['transfers']:st.success('Everyone is settled up.')
+                st.download_button('Download expense record',json.dumps({'expenses':expenses,'settlement':split},indent=2),file_name='tripsure-expenses.json',mime='application/json')
+                if st.button('Undo last expense'):
+                    expenses.pop()
+                    st.rerun()
     with trust:
         st.markdown('#### Checks performed in Python')
         for label,passed in p['checks'].items():st.write(('✅ ' if passed else '❌ ')+label)
@@ -178,3 +238,6 @@ else:
             st.json(source_guard(document))
             st.success('Existing itinerary unchanged. External text was not passed to the planner or Azure model.')
         st.caption('This lab demonstrates isolation and a simple pattern detector, not Azure Prompt Shields or a complete attack detector. No arbitrary URL fetch, shell tool, booking or payment capability is exposed.')
+
+st.caption('Destination photograph: Yatra travel blog · Rishikesh. Used as destination inspiration.')
+st.link_button('Photo source', 'https://www.yatrablog.com/10-things-that-you-didnt-know-about-rishikesh')

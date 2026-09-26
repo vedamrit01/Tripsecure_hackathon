@@ -128,3 +128,17 @@ Docker configuration is provided; a container deployment was not performed. Loca
 - Weather API and usage terms: https://open-meteo.com/en/docs
 
 Weather data attribution: Open-Meteo. Review its service terms before commercial deployment.
+
+## Travel companion upgrade
+
+- Travel-inspired forest-green and warm-ivory interface with bundled destination photography, editorial typography and responsive layouts. Fonts fall back to installed fonts offline.
+- **Compare escapes:** evaluate both destinations using the same confirmed constraints, then select a proposal. Choosing a destination resets old activity locks.
+- **Calendar export:** download planned activities as `.ics` events for calendar import. India local times are converted to UTC; events are proposals, not bookings.
+- **Travel kit:** destination-aware packing checklist with progress and a text download.
+- **Group expenses:** record actual spending, choose who paid, undo the latest entry, calculate equal shares with exact whole-rupee settlements, and download the ledger as JSON. Estimates remain separate from actual spending.
+
+Checklist and expense data are session-only. Changing destination, departure date or group size resets the travel kit; download your expense record first. No cloud persistence or payment execution is implied. Destination comparisons do not inherit locks from the active plan.
+
+Photo source: [Yatra Rishikesh travel blog](https://www.yatrablog.com/10-things-that-you-didnt-know-about-rishikesh). Photograph bundled for the destination inspiration display; third-party image rights remain with their owner.
+
+Validation: 29 automated tests, including three Streamlit interaction tests. New coverage checks India-time calendar export, expense conservation and settlement, invalid expenses, destination comparison, packing, and destination-switch state reset. Live Azure calls remain unverified.

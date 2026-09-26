@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+.stApp{background:#f8f6f0;color:#183c37;font-family:'DM Sans',sans-serif}
+.block-container{max-width:1280px;padding-top:2rem}
+h1,h2,h3{letter-spacing:-.035em;color:#153e35}
+[data-testid="stSidebar"]{background:#eaece3;border-right:1px solid #d8dfd2}
+[data-testid="stMetric"]{background:#fffdf8;border:1px solid #dce1d4;padding:20px;border-radius:16px}
+[data-testid="stMetricLabel"]{text-transform:uppercase;font-size:11px;letter-spacing:1px}
+.stButton>button[kind="primary"],.stFormSubmitButton>button[kind="primary"]{background:#245846;border:0;border-radius:10px}
+button{transition:transform .15s ease}button:hover{transform:translateY(-1px)}
+[data-testid="stForm"]{background:#fffdf8;border:1px solid #dde2d5;border-radius:18px}
+[data-baseweb="tab-list"]{gap:22px;border-bottom:1px solid #d4dccc}
+[data-baseweb="tab"]{font-weight:600;padding:14px 4px}
+.hero{background:linear-gradient(110deg,#113b31 0%,#255e49 65%,#467258 100%);padding:48px 44px;border-radius:24px;color:#fffaf0;margin-bottom:28px;position:relative;overflow:hidden}
+.hero h1{font-family:'Playfair Display',Georgia,serif;color:#fffaf0;font-size:clamp(38px,5vw,66px);font-weight:500;line-height:1.08;max-width:740px;margin:20px 0}
+.hero p{color:#e1eadb;font-size:17px;max-width:580px;line-height:1.7}
+.eyebrow{letter-spacing:3px;font-size:11px;color:#d6e9bd;font-weight:700}
+.hero-footer{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap}.hero-footer span{border:1px solid #789785;border-radius:30px;padding:8px 14px;font-size:12px;color:#f1f4df}
+.route-label{color:#afc9ad;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:28px}
+.feature-card{padding:25px;background:#eeeee3;border-radius:16px;min-height:170px;margin:12px 0}.feature-card b{display:block;font-size:20px;margin:12px 0}.feature-card p{font-size:14px;color:#526356;line-height:1.6}
+@media(max-width:640px){.hero{padding:30px 24px}.block-container{padding-top:1rem}.hero-footer{gap:7px}[data-baseweb="tab-list"]{gap:12px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}

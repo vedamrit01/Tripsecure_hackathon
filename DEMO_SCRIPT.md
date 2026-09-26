@@ -35,3 +35,13 @@ Open Sources & checks. Show what was checked and what remains unverified. Fetch 
 - Never commit the API key; confirm `.env` is ignored.
 - Push main and open the GitHub URL to verify the files are present.
 - Demonstrate the cheaper budget at ₹18,000; ₹35,000 is above the baseline so it may not require changes.
+
+## New travel companion demo (60–90 seconds)
+
+1. Build the default trip and show the cost and contingency.
+2. Open **Compare escapes**: both destination estimates use the same travellers, dates and budget. Choose Jaipur to demonstrate a real plan change.
+3. Open **Travel kit**, tick Photo ID, and add a ₹500 lunch paid by Traveller 1. Show the ₹250 settlement owed by Traveller 2. Explain that actual spending is separate from estimates.
+4. Download the calendar from **Your journey**. Activity times are exported correctly for India.
+5. Demonstrate a rain repair and an activity lock in **Adapt my trip**. Finish with internal checks and the security isolation demo.
+
+Describe comparisons as estimated plans, rain as simulation, and session data as temporary. Never claim live bookings, verified venue availability or production readiness.
